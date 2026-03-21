@@ -29,23 +29,50 @@ jobs:
           qmake IEC104.pro CONFIG+=c++17
           nmake release
 
-      - name: Find EXE
+      - name: Find EXE Location
         run: |
-          echo "=== Searching for EXE ==="
-          Get-ChildItem -Recurse -Filter "*.exe"
+          echo "=== All EXE files found ==="
+          Get-ChildItem -Recurse -Filter "*.exe" | ForEach-Object { echo $_.FullName }
 
       - name: Deploy Qt DLLs
         run: |
-          $exe = Get-ChildItem -Recurse -Filter "*.exe" | Select-Object -First 1
-          echo "Found EXE at: $($exe.FullName)"
-          windeployqt $exe.FullName
-          echo "EXE Directory: $($exe.DirectoryName)"
+          $exe = Get-ChildItem -Recurse -Filter "*.exe" | Where-Object { $_.Name -like "*IEC*" -or $_.Name -like "*iec*" -or $_.Name -like "*tester*" } | Select-Object -First 1
+          if ($exe) {
+            echo "Found EXE: $($exe.FullName)"
+            windeployqt $exe.FullName
+            echo "EXEDIR=$($exe.DirectoryName)" >> $env:GITHUB_ENV
+          } else {
+            echo "No IEC exe found, searching all..."
+            $exe = Get-ChildItem -Recurse -Filter "*.exe" | Select-Object -First 1
+            echo "Using: $($exe.FullName)"
+            windeployqt $exe.FullName
+            echo "EXEDIR=$($exe.DirectoryName)" >> $env:GITHUB_ENV
+          }
 
       - name: Upload Artifacts
         uses: actions/upload-artifact@v4
         with:
           name: QTester104-Windows
-          path: |
-            **/*.exe
-            **/release/*
-          if-no-files-found: warn
+          path: ${{ env.EXEDIR }}
+          if-no-files-found: error
+```
+
+---
+
+## What This Does Differently
+```
+1. Searches ALL folders for any .exe
+2. Prints exact path in log
+3. Deploys DLLs to correct folder
+4. Uploads that exact folder
+```
+
+---
+
+## After Running
+```
+Actions → Green tick
+→ Bottom of page
+→ Artifacts → QTester104-Windows
+→ Download ZIP
+→ Extract → Run IEC104.exe
