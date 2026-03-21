@@ -1,0 +1,28 @@
+name: Build QTester104 Windows EXE
+
+on:
+  push:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Install Qt
+        uses: jurplel/install-qt-action@v3
+        with:
+          version: '5.15.2'
+          
+      - name: Build
+        run: |
+          qmake QTester104.pro
+          nmake
+          
+      - name: Upload EXE
+        uses: actions/upload-artifact@v3
+        with:
+          name: QTester104-Windows
+          path: release/*.exe
