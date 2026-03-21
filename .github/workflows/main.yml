@@ -29,29 +29,13 @@ jobs:
           qmake IEC104.pro CONFIG+=c++17
           nmake release
 
-      - name: Find EXE Location
-        run: |
-          echo "=== All EXE files found ==="
-          Get-ChildItem -Recurse -Filter "*.exe" | ForEach-Object { echo $_.FullName }
-
       - name: Deploy Qt DLLs
         run: |
-          $exe = Get-ChildItem -Recurse -Filter "*.exe" | Where-Object { $_.Name -like "*IEC*" -or $_.Name -like "*iec*" -or $_.Name -like "*tester*" } | Select-Object -First 1
-          if ($exe) {
-            echo "Found EXE: $($exe.FullName)"
-            windeployqt $exe.FullName
-            echo "EXEDIR=$($exe.DirectoryName)" >> $env:GITHUB_ENV
-          } else {
-            echo "No IEC exe found, searching all..."
-            $exe = Get-ChildItem -Recurse -Filter "*.exe" | Select-Object -First 1
-            echo "Using: $($exe.FullName)"
-            windeployqt $exe.FullName
-            echo "EXEDIR=$($exe.DirectoryName)" >> $env:GITHUB_ENV
-          }
+          windeployqt --no-translations release\QTester104.exe
 
       - name: Upload Artifacts
         uses: actions/upload-artifact@v4
         with:
           name: QTester104-Windows
-          path: ${{ env.EXEDIR }}
+          path: release\
           if-no-files-found: error
