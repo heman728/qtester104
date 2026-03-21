@@ -55,24 +55,3 @@ jobs:
           name: QTester104-Windows
           path: ${{ env.EXEDIR }}
           if-no-files-found: error
-```
-
----
-
-## What This Does Differently
-```
-1. Searches ALL folders for any .exe
-2. Prints exact path in log
-3. Deploys DLLs to correct folder
-4. Uploads that exact folder
-```
-
----
-
-## After Running
-```
-Actions → Green tick
-→ Bottom of page
-→ Artifacts → QTester104-Windows
-→ Download ZIP
-→ Extract → Run IEC104.exe
