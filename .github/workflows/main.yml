@@ -17,19 +17,25 @@ jobs:
       - name: Install Qt
         uses: jurplel/install-qt-action@v4
         with:
-          version: '5.15.2'
+          version: '6.5.0'
           arch: 'win64_msvc2019_64'
+          modules: 'qtnetworkauth'
 
       - name: Setup MSVC
         uses: ilammy/msvc-dev-cmd@v1
 
       - name: Build
         run: |
-          qmake IEC104.pro
+          qmake IEC104.pro CONFIG+=c++17
           nmake release
+
+      - name: Copy Qt DLLs
+        run: |
+          windeployqt release\IEC104.exe
+        continue-on-error: true
 
       - name: Upload EXE
         uses: actions/upload-artifact@v4
         with:
           name: QTester104-Windows
-          path: release/*.exe
+          path: release\
