@@ -29,13 +29,23 @@ jobs:
           qmake IEC104.pro CONFIG+=c++17
           nmake release
 
-      - name: Copy Qt DLLs
+      - name: Find EXE
         run: |
-          windeployqt release\IEC104.exe
-        continue-on-error: true
+          echo "=== Searching for EXE ==="
+          Get-ChildItem -Recurse -Filter "*.exe"
 
-      - name: Upload EXE
+      - name: Deploy Qt DLLs
+        run: |
+          $exe = Get-ChildItem -Recurse -Filter "*.exe" | Select-Object -First 1
+          echo "Found EXE at: $($exe.FullName)"
+          windeployqt $exe.FullName
+          echo "EXE Directory: $($exe.DirectoryName)"
+
+      - name: Upload Artifacts
         uses: actions/upload-artifact@v4
         with:
           name: QTester104-Windows
-          path: release\
+          path: |
+            **/*.exe
+            **/release/*
+          if-no-files-found: warn
