@@ -80,7 +80,7 @@ private slots:
   void slot_sslErrors(const QList<QSslError> &errors); // Slot for SSL errors
   void slot_socketEncrypted();
   void slot_socketError(QAbstractSocket::SocketError);
-  void slot_handshakeInterruptedOnError(const QSslError &error);
+ 
 
 private:
   // QThread tcpThread;
