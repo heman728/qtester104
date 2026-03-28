@@ -55,13 +55,14 @@ QIec104::QIec104(QObject *parent) : QObject(parent) {
           SLOT(slot_tcperror(QAbstractSocket::SocketError)),
           Qt::DirectConnection);
 
-  if (mUseTls) {
-      connect(tcps, &QSslSocket::sslErrors, this, &QIec104::slot_sslErrors);
-      connect(tcps, &QSslSocket::errorOccurred, this, &QIec104::slot_socketError);
-      connect(tcps, &QSslSocket::encrypted, this, &QIec104::slot_socketEncrypted);
-      connect(tcps, &QSslSocket::handshakeInterruptedOnError, this,
-              &QIec104::slot_handshakeInterruptedOnError);
-  }
+if (mUseTls) {
+    connect(tcps, SIGNAL(sslErrors(QList<QSslError>)),
+            this, SLOT(slot_sslErrors(QList<QSslError>)));
+    connect(tcps, SIGNAL(error(QAbstractSocket::SocketError)),
+            this, SLOT(slot_socketError(QAbstractSocket::SocketError)));
+    connect(tcps, SIGNAL(encrypted()),
+            this, SLOT(slot_socketEncrypted()));
+}
 
   // tcps->moveToThread(&tcpThread);
   // tcpThread.start(QThread::TimeCriticalPriority);
@@ -338,19 +339,18 @@ void QIec104::enable_connect() { mAllowConnect = true; }
 int QIec104::bytesAvailableTCP() { return int(tcps->bytesAvailable()); }
 
 void QIec104::slot_sslErrors(const QList<QSslError> &errors) {
-  QString errorStrings;
-  for (const QSslError &error : errors) {
-      errorStrings += error.errorString() + "; ";
-      if (error.error() == QSslError::SelfSignedCertificate) {
-          mLog.pushMsg("Ignoring self-signed certificate error (for testing).");
-          tcps->ignoreSslErrors();
-      }
-  }
-  mLog.pushMsg(QString("SSL Errors Encountered: %1")
-                   .arg(errorStrings)
-                   .toStdString()
-                   .c_str());
-  // tcps->ignoreSslErrors();
+    QString errorStrings;
+    for (const QSslError &error : errors) {
+        errorStrings += error.errorString() + "; ";
+    }
+
+    mLog.pushMsg(QString("SSL Errors: %1")
+                     .arg(errorStrings)
+                     .toStdString()
+                     .c_str());
+
+    // Required in Qt5 to proceed
+    tcps->ignoreSslErrors();
 }
 
 void QIec104::slot_socketError(QAbstractSocket::SocketError) {
@@ -359,8 +359,4 @@ void QIec104::slot_socketError(QAbstractSocket::SocketError) {
 
 void QIec104::slot_socketEncrypted() { mLog.pushMsg("Encrypted slot!"); }
 
-void QIec104::slot_handshakeInterruptedOnError(const QSslError &) {
-    mLog.pushMsg(tcps->errorString().toStdString().c_str());
-    mLog.pushMsg("Handshake interrupted, trying to continue...");
-    tcps->continueInterruptedHandshake();
-}
+
