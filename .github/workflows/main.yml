@@ -1,41 +1,44 @@
-name: Build QTester104 Windows EXE
+name: Build QTester104 Windows EXE (Server 2012 R2 Compatible)
 
 on:
   push:
     branches: [ main, master ]
   workflow_dispatch:
 
-env:
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-
 jobs:
   build-windows:
     runs-on: windows-latest
-    steps:
-      - uses: actions/checkout@v4
 
-      - name: Install Qt
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      # Install Qt 5.15.2 (last version supporting Win7/2012R2)
+      - name: Install Qt 5.15.2
         uses: jurplel/install-qt-action@v4
         with:
-          version: '6.5.0'
+          version: '5.15.2'
           arch: 'win64_msvc2019_64'
-          modules: 'qtnetworkauth'
 
+      # Setup MSVC compiler
       - name: Setup MSVC
         uses: ilammy/msvc-dev-cmd@v1
 
-      - name: Build
+      # Build using qmake and nmake
+      - name: Build Project
         run: |
           qmake IEC104.pro CONFIG+=c++17
           nmake release
 
+      # Deploy all Qt + MSVC runtime files locally
       - name: Deploy Qt DLLs
         run: |
           windeployqt --no-translations release\QTester104.exe
 
-      - name: Upload Artifacts
+      # Upload ready-to-run portable folder
+      - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: QTester104-Windows
+          name: QTester104-Windows-Portable
           path: release\
           if-no-files-found: error
